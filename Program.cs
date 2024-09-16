@@ -2,22 +2,39 @@
 
 var jsocApi = new JsocApi();
 
-// todo: Возможно нужно еще вызывать операцию check?
-var fromTime = new DateTime(2015, 5, 27);
+var fromTime = new DateTime(2018, 10, 27);
+int duration = 80;
+int channel = 94;
+
+Console.WriteLine("Checking existing requests...");
+bool existingUncompletedRequest = await jsocApi.IsExistingUncompletedRequest();
+if (existingUncompletedRequest)
+{
+    Console.WriteLine("Existing requests found!");
+    Console.WriteLine("Canceling...");
+    await jsocApi.Cancel();
+}
+
 try
 {
-    string requestId = await jsocApi.Submit(fromTime, 85, 94);
-    Console.WriteLine($"RequestId = {requestId}. Waiting...");
-    await jsocApi.Check();
-    Console.WriteLine("Checking parametrs...");
-    UrlsOfFitsResponse urlsOfFits = await jsocApi.GetUrlsOfFiles(requestId);
-    Console.WriteLine($"Fetch. RequestId = {requestId}");
-    GetFitsFiles(urlsOfFits);
+    Console.WriteLine("Not found existing request");
+    Console.WriteLine("Creating request...");
+    string requestId = await jsocApi.Submit(fromTime, duration, channel);
+    Console.WriteLine($"Request created. RequestId = {requestId}");
+    // этот запрос только создает заявку, он не возращает url
+    await jsocApi.WaitForCurrentRequestToComplete();
+    var urlsOfFits = await jsocApi.GetUrlsOfFiles(requestId);
+    if (urlsOfFits.Data == null)
+        Console.WriteLine("Data = null");
+    else
+        GetFitsFiles(urlsOfFits);
 }
-catch (ProcessingExportRequestException ex)
+catch (UnknowException ex)
 {
     Console.WriteLine(ex.Message);
 }
+
+
 
 void GetFitsFiles(UrlsOfFitsResponse urlsOfFitsResponse)
 {

@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 using System;
 
 [Serializable]
-public class FetchResult
+public class SubmitResponse
 {
     [JsonProperty("status")]
     public int Status { get; set; }

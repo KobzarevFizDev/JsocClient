@@ -11,14 +11,31 @@ public class JsocApi
         _httpClient = new HttpClient();
     }
 
-    public async Task Check()
+    public async Task<bool> IsExistingUncompletedRequest()
     {
         string endpoint = $"http://jsoc.stanford.edu/cgi-bin/ajax/manage-request.sh?address={_notify}&operation=check&H=hmidb2";
-        HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
-        var r = await response.Content.ReadAsStringAsync();
-        Console.WriteLine("JsocApi::CheckParametrs(). Response = " + r);
+        var request = await _httpClient.GetAsync(endpoint);
+        var response = await request.Content.ReadFromJsonAsync<SubmitResponse>();
+        return response.Status == 1;
     }
 
+    public async Task WaitForCurrentRequestToComplete()
+    {
+        bool isComplete = await IsExistingUncompletedRequest();
+        while (isComplete == false)
+        {
+            await Task.Delay(1000);
+            isComplete = await IsExistingUncompletedRequest();
+            Console.WriteLine("Жду окончание обработки запроса...");
+        }
+    }
+
+    public async Task Cancel()
+    {
+        string endpoint = $"http://jsoc.stanford.edu/cgi-bin/ajax/manage-request.sh?address={_notify}&operation=cancel&H=hmidb2";
+        HttpResponseMessage request = await _httpClient.GetAsync(endpoint);
+        var response = await request.Content.ReadFromJsonAsync<CancelResponse>();
+    }
 
     public async Task<string> Submit(DateTime fromTime, int durationInMinutes, int channel)
     {
@@ -43,9 +60,9 @@ public class JsocApi
 
 
         HttpResponseMessage response = await _httpClient.PostAsync(endpoint, form);
-        var result = await response.Content.ReadFromJsonAsync<FetchResult>();
+        var result = await response.Content.ReadFromJsonAsync<SubmitResponse>();
         if (result.Status > 2)
-            throw new ProcessingExportRequestException(result.Status);
+            throw new UnknowException(result.Status);
 
         string requestId = result.RequestId;
         return requestId;
