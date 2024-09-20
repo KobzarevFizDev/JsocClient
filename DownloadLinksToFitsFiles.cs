@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-public class UrlsOfFitsResponse
+public class LinksToFitsFiles
 {
     [JsonProperty("version")]
     public string Version { get; set; } = null!;
