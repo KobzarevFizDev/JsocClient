@@ -68,11 +68,11 @@ public class JsocApi
         return requestId;
     }
 
-    public async Task<UrlsOfFitsResponse> GetUrlsOfFiles(string requestId)
+    public async Task<LinksToFitsFiles> GetLinksToFitsFiles(string requestId)
     {
         string endpoint = $"http://jsoc.stanford.edu/cgi-bin/ajax/jsoc_fetch?op=exp_status&requestid={requestId}";
         HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
-        var files = await response.Content.ReadFromJsonAsync<UrlsOfFitsResponse>();
+        var files = await response.Content.ReadFromJsonAsync<LinksToFitsFiles>();
         return files;
     }
 }
